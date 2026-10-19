@@ -4159,6 +4159,17 @@ func handleUpdate(args []string) {
 		exit(runTimerCommand("status", timerOpts, os.Stdout))
 	}
 
+	// wildeagency fork: unattended installs pull upstream releases from
+	// GitHub and would silently replace this fork build (and its patches)
+	// with the upstream binary. Every automatic path (the daily timer, the
+	// TUI and `web --no-tui` auto-install, controller nudges) goes through
+	// --unattended/--check-now, so refuse them here. Set
+	// AGENTDECK_ALLOW_UPSTREAM_UPDATE=1 to let one through deliberately.
+	if (*unattended || *checkNow) && os.Getenv("AGENTDECK_ALLOW_UPSTREAM_UPDATE") != "1" {
+		fmt.Println("wildeagency fork build: unattended upstream update skipped (set AGENTDECK_ALLOW_UPSTREAM_UPDATE=1 to override)")
+		exit(exitUpdateOK)
+	}
+
 	if *unattended || *checkNow {
 		// The TUI runs this child with its stdout on a pipe. Should the TUI
 		// go away mid-run (a quit, or a restart that slipped past the

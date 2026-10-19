@@ -32,7 +32,9 @@
 // the Instance on every spawn, so a rename, re-parent or account switch is
 // reflected at the next start/restart, never stale.
 //
-// Opt-out: `[launch] inject_identity = false` in config.toml (global) or
+// wildeagency fork: OFF by default. Opt in with `[launch] inject_identity =
+// true` or a context_level at any layer. Opt-out (when opted in):
+// `[launch] inject_identity = false` in config.toml (global) or
 // `agent-deck add|launch --no-identity` (per session, persisted). SSH and
 // sandboxed (docker) sessions are skipped: the file lives on the controller
 // host and would not be visible where the harness actually runs.
@@ -151,9 +153,22 @@ func (i *Instance) EffectiveContextLevel() (level, source string) {
 		if cfg.Launch.InjectIdentity != nil && !*cfg.Launch.InjectIdentity {
 			return ContextLevelNone, "global (inject_identity=false)"
 		}
+		if cfg.Launch.InjectIdentity != nil && *cfg.Launch.InjectIdentity {
+			return ContextLevelFull, "global (inject_identity=true)"
+		}
 	}
-	return ContextLevelFull, "default"
+	return DefaultContextLevel, "default"
 }
+
+// DefaultContextLevel is the level when no layer configures one.
+//
+// wildeagency fork: injection is opt-in. Our sessions bootstrap from our own
+// startup (protocol bootstrap, ticker contract, charters); agent-deck must not
+// append its own instructions to the system prompt unless a layer above asks
+// for it (inject_identity = true, context_level, or a per-session
+// context-level). Upstream's default is ContextLevelFull; the test binaries
+// set it back so upstream's coverage of the injection itself keeps running.
+var DefaultContextLevel = ContextLevelNone
 
 // identityFileName is the canonical identity file inside the per-session
 // directory. geminiIdentityFileName is the same content under the name

@@ -91,7 +91,7 @@ func handleLaunchCommand(profile string, args []string, inspectFlags func(*flag.
 	messageFile := fs.String("message-file", "", "Read the initial message from a file ('-' for stdin); avoids shell quoting of long prompts")
 	noWait := fs.Bool("no-wait", false, "Don't wait for agent to be ready before sending message")
 	ignoreBudget := fs.Bool("ignore-budget", false, ignoreBudgetFlagHelp)
-	assertDone := fs.Bool("assert-done", false, "Append a completion-sentinel instruction to the message (default on for -c claude)")
+	assertDone := fs.Bool("assert-done", false, "Append a completion-sentinel instruction to the message (off by default in the wildeagency fork)")
 	noAssertDone := fs.Bool("no-assert-done", false, "Disable the completion-sentinel instruction")
 	parent := fs.String("parent", "", "Parent session (creates sub-session; group is cwd-derived by default — auto-inherits the parent's group for git worktree children or with --inherit-group)")
 	parentShort := fs.String("p", "", "Parent session (short)")
@@ -294,14 +294,10 @@ func handleLaunchCommand(profile string, args []string, inspectFlags func(*flag.
 	}
 
 	// --assert-done: append the completion-sentinel instruction so the child
-	// reliably reports back via the ledger / parent inbox. Default-on for
-	// Claude children (a completion signal nobody requests is useless);
+	// reliably reports back via the ledger / parent inbox. wildeagency fork:
+	// opt-in only, so agent-deck never edits the first prompt we send;
 	// --no-assert-done always wins.
-	assertDoneTool := firstNonEmpty(sessionCommandTool, detectTool(sessionCommandInput))
 	assertDoneOn := *assertDone
-	if !*assertDone && !*noAssertDone && session.IsClaudeCompatible(assertDoneTool) {
-		assertDoneOn = true
-	}
 	if *noAssertDone {
 		assertDoneOn = false
 	}

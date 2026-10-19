@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/asheshgoplani/agent-deck/internal/session"
 	"github.com/asheshgoplani/agent-deck/internal/testutil"
 )
 
@@ -14,6 +15,8 @@ import (
 // accidental modification of production data.
 // CRITICAL: This was missing and caused test data to overwrite production sessions!
 func TestMain(m *testing.M) {
+	// wildeagency fork: upstream tests assume injection on by default.
+	session.DefaultContextLevel = session.ContextLevelFull
 	os.Exit(runTestMain(m))
 }
 

@@ -215,6 +215,8 @@ func TestMain(m *testing.M) {
 	if mode := os.Getenv(inboxFlockHelperEnv); mode != "" {
 		os.Exit(runInboxFlockHelper(mode))
 	}
+	// wildeagency fork: upstream tests assume injection on by default.
+	DefaultContextLevel = ContextLevelFull
 	os.Exit(runTestMain(m))
 }
 

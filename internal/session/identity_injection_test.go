@@ -1194,3 +1194,25 @@ func TestCodexIdentityOverride_PreservesLegitDottedProjectPath(t *testing.T) {
 		t.Errorf("must not resurrect the user layer when the project layer is present:\n%s", got)
 	}
 }
+
+// wildeagency fork: with nothing configured, no identity block is injected.
+func TestFork_DefaultContextLevelIsNone(t *testing.T) {
+	prev := DefaultContextLevel
+	DefaultContextLevel = ContextLevelNone
+	defer func() { DefaultContextLevel = prev }()
+	restore := resetUserConfigCache(t, &UserConfig{})
+	defer restore()
+	inst := &Instance{ID: "fork-default", Title: "t", Tool: "claude"}
+	if level, source := inst.EffectiveContextLevel(); level != ContextLevelNone || source != "default" {
+		t.Fatalf("got (%q, %q), want (none, default)", level, source)
+	}
+	if flag := inst.claudeIdentityFlag(); flag != "" {
+		t.Fatalf("claude spawn must carry no identity flag by default, got %q", flag)
+	}
+	on := true
+	restore2 := resetUserConfigCache(t, &UserConfig{Launch: LaunchSettings{InjectIdentity: &on}})
+	defer restore2()
+	if level, _ := inst.EffectiveContextLevel(); level != ContextLevelFull {
+		t.Fatalf("inject_identity = true must opt back in, got %q", level)
+	}
+}
